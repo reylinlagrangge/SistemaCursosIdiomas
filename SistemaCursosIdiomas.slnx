@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Idiomas.Api/Idiomas.Api.csproj" />
+  <Project Path="Idiomas.Application/Idiomas.Application.csproj" />
   <Project Path="Idiomas.Domain/Idiomas.Domain.csproj" />
   <Project Path="Idiomas.Infrastructure/Idiomas.Infrastructure.csproj" />
 </Solution>
