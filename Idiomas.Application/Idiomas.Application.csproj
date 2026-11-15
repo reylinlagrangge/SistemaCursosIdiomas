@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Idiomas.Domain\Idiomas.Domain.csproj" />
+    <ProjectReference Include="..\Idiomas.Infrastructure\Idiomas.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

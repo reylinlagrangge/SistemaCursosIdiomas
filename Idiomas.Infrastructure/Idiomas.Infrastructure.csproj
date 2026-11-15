@@ -19,8 +19,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Idiomas.Application\Idiomas.Application.csproj" />
-  </ItemGroup>
-
 </Project>

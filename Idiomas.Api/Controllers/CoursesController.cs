@@ -1,7 +1,6 @@
-﻿using Idiomas.Domain.Entities;
-using Idiomas.Infrastructure.Exceptions;
-using Idiomas.Infrastructure.Interfaces;
-using Idiomas.Infrastructure.Models;
+﻿using Idiomas.Application.Contract;
+using Idiomas.Application.Dtos;
+using Idiomas.Application.Dtos.Courses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Idiomas.Api.Controllers;
@@ -10,71 +9,42 @@ namespace Idiomas.Api.Controllers;
 [Route("api/[controller]")]
 public class CoursesController : ControllerBase
 {
-    private readonly ICourseRepository _repository;
+    private readonly ICourseService _service;
 
-    public CoursesController(ICourseRepository repository) => _repository = repository;
+    public CoursesController(ICourseService service) => _service = service;
+
+    private IActionResult ToActionResult<T>(ServiceResult<T> result) =>
+        result.Success ? Ok(result.Data)
+        : result.NotFound ? NotFound(result.Message)
+        : BadRequest(result.Message);
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var courses = await _repository.GetAllAsync();
-        return Ok(courses.Select(ToModel));
-    }
+    public async Task<IActionResult> GetAll() => ToActionResult(await _service.GetAllAsync());
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var course = await _repository.GetByIdAsync(id);
-        return course is null ? NotFound() : Ok(ToModel(course));
-    }
+    public async Task<IActionResult> GetById(int id) => ToActionResult(await _service.GetByIdAsync(id));
+
+    [HttpGet("level/{levelId}")]
+    public async Task<IActionResult> GetByLevel(int levelId) =>
+        ToActionResult(await _service.GetByLevelAsync(levelId));
 
     [HttpPost]
-    public async Task<IActionResult> Create(CourseModel model)
+    public async Task<IActionResult> Create(SaveCourseDto dto)
     {
-        try
-        {
-            var created = await _repository.AddAsync(ToEntity(model));
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, ToModel(created));
-        }
-        catch (CourseException ex) { return Conflict(ex.Message); }
+        var result = await _service.CreateAsync(dto);
+        return result.Success
+            ? CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data)
+            : ToActionResult(result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, CourseModel model)
-    {
-        if (await _repository.GetByIdAsync(id) is null) return NotFound();
-        model.Id = id;
-        await _repository.UpdateAsync(ToEntity(model));
-        return NoContent();
-    }
+    public async Task<IActionResult> Update(int id, SaveCourseDto dto) =>
+        ToActionResult(await _service.UpdateAsync(id, dto));
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        if (await _repository.GetByIdAsync(id) is null) return NotFound();
-        await _repository.DeleteAsync(id);
-        return NoContent();
+        var result = await _service.DeleteAsync(id);
+        return result.Success ? NoContent() : ToActionResult(result);
     }
-
-    private static CourseModel ToModel(Course c) => new()
-    {
-        Id = c.Id,
-        Name = c.Name,
-        Language = c.Language,
-        Description = c.Description,
-        Price = c.Price,
-        LevelId = c.LevelId,
-        TeacherId = c.TeacherId
-    };
-
-    private static Course ToEntity(CourseModel m) => new()
-    {
-        Id = m.Id,
-        Name = m.Name,
-        Language = m.Language,
-        Description = m.Description,
-        Price = m.Price,
-        LevelId = m.LevelId,
-        TeacherId = m.TeacherId
-    };
 }
